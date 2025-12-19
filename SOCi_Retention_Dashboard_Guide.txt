@@ -1,0 +1,165 @@
+================================================================================
+                    SOCi RETENTION ANALYTICS DASHBOARD
+                              USER GUIDE
+================================================================================
+
+
+ACCESS
+================================================================================
+
+Dashboard URL: https://rodolfopardo.github.io/retention_dashboard/
+
+Login Credentials:
+
+    Username: soci
+    Password: retention2025
+
+    Username: admin
+    Password: searchmas2025
+
+    Username: demo
+    Password: demo123
+
+
+DASHBOARD OVERVIEW
+================================================================================
+
+The SOCi Retention Analytics Dashboard provides comprehensive insights into
+customer retention and churn analysis. It helps identify at-risk accounts,
+understand churn patterns, and make data-driven decisions to improve
+customer retention.
+
+
+MAIN SECTIONS
+================================================================================
+
+1. OVERVIEW
+-----------
+The main landing page with key performance indicators:
+
+   - Active Clients: Total number of current customers
+   - Former Clients: Number of churned customers
+   - Total ARR: Annual Recurring Revenue from active clients
+   - Lost ARR: Revenue lost from churned accounts
+   - Churn Rate by Tier: Visual breakdown by customer tier
+   - Client Distribution: Pie chart of customer segments
+   - Industry Analysis: Churn risk by industry
+
+
+2. CHURN ANALYSIS
+-----------------
+Deep dive into churn patterns:
+
+   - ARR Distribution: Revenue comparison (active vs churned)
+   - Churn by ARR Tier: Which revenue segments churn most
+   - Key Insights: Critical findings and recommendations
+
+
+3. ENGAGEMENT
+-------------
+Product usage and engagement metrics:
+
+   - Engagement Comparison: Active vs churned customer behavior
+   - Social Media Metrics: Posts, impressions, engagement rates
+   - Metric Comparison:
+     * Average Ads Spend: Clients $800 vs Former $83 (-90%)
+     * Average Social Posts: Clients 330 vs Former 126 (-62%)
+     * Average Impressions: Clients 139,828 vs Former 18,032 (-87%)
+     * Engagement Rate: Clients 11.4% vs Former 3.6% (-68%)
+
+
+4. CUSTOMER HEALTH
+------------------
+Health indicators and satisfaction:
+
+   - NPS Score Distribution: Net Promoter Score analysis
+   - Support Tickets: Ticket volume comparison
+   - Health Metrics:
+     * Client NPS: 29.1
+     * Avg Tickets per Client: 122.9
+     * Avg Tickets per Former Client: 21.8
+
+
+5. AT-RISK ACCOUNTS
+-------------------
+Account-level risk identification:
+
+   - Risk Summary Cards:
+     * Critical Risk (Score 85+): Immediate action required
+     * High Risk (Score 70-84): Close monitoring needed
+     * Medium Risk (Score 50-69): Watch list
+     * Low Risk (Score below 50): Healthy accounts
+
+   - Account Table: Complete list with filtering and search
+   - Export: Download data to CSV
+
+
+FILTERING OPTIONS
+================================================================================
+
+Global Filters (top of dashboard):
+
+   - Industry: Filter by business industry (19 options)
+   - Vertical: Filter by business model type (10 options)
+   - Tier: Filter by customer tier
+     * Tier 1: Enterprise
+     * Tier 2: Large accounts
+     * Tier 3: Mid-market
+     * Tier 4: Small business
+     * Tier 5: SMB
+   - Account Type: Client or Former Client
+   - Clear: Reset all filters
+
+At-Risk Section Filters:
+
+   - Risk Level: Critical, High, Medium, Low
+   - Search: Find accounts by name
+   - Export CSV: Download filtered results
+
+
+RISK FACTORS
+================================================================================
+
+Each account displays risk indicators:
+
+   - Low engagement: Below threshold product usage
+   - Usage declining: Negative trend in activity
+   - Small account: Tier 4-5 accounts
+   - High-risk vertical: Industry with higher churn rates
+   - Churned: Already former client
+   - Healthy: No significant risk factors
+
+
+KEY INSIGHTS
+================================================================================
+
+   - Tier 5 (SMB) accounts have 36.8% churn rate - nearly 5x higher than
+     Tier 1 Enterprise accounts (7.5%)
+
+   - Former clients had average ARR of $41,000 compared to $101,000 for
+     active clients - a 60% difference
+
+   - Engagement metrics show churned customers had significantly lower
+     product usage across all categories
+
+   - NPS scores are similar between active (29.1) and former clients (27.8),
+     suggesting NPS alone is not a strong churn predictor
+
+
+DATA SOURCES
+================================================================================
+
+Data is sourced from BigQuery (searchmas-gmb-data-extract.retention):
+
+   - account_details: Account information, tier, ARR
+   - ads: Advertising spend and performance
+   - listings: Business listing metrics
+   - reviews: Review counts and ratings
+   - social: Social media engagement
+   - pendo: Product usage data
+   - zendesk: Support ticket information
+
+
+================================================================================
+                    Searchmas Analytics Team | December 2025
+================================================================================
