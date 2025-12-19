@@ -1,29 +1,27 @@
 /**
  * SOCi Retention Dashboard - Main Application
+ * With filtering support
  */
 
 const App = {
-    // Risk accounts data
-    riskAccounts: [
-        { name: 'Property Solutions Inc', tier: 5, vertical: 'Property', arr: 18500, riskScore: 92, factors: ['Low engagement', 'No ads', 'Support issues'] },
-        { name: 'LocalBiz Agency', tier: 4, vertical: 'Agency - Local', arr: 24000, riskScore: 88, factors: ['Declining usage', 'Low NPS'] },
-        { name: 'RealEstate Pro', tier: 5, vertical: 'Property - SaaS', arr: 15200, riskScore: 85, factors: ['No social posts', 'Low reviews'] },
-        { name: 'Healthcare Connect', tier: 4, vertical: 'Healthcare', arr: 32000, riskScore: 82, factors: ['Support escalations', 'Low adoption'] },
-        { name: 'Retail Dynamics', tier: 3, vertical: 'Retail', arr: 45000, riskScore: 78, factors: ['Decreasing ARR', 'Low engagement'] },
-        { name: 'FoodService Group', tier: 4, vertical: 'Food & Beverage', arr: 28500, riskScore: 76, factors: ['No ads spend', 'Low impressions'] },
-        { name: 'Manufacturing Plus', tier: 4, vertical: 'Manufacturing', arr: 22000, riskScore: 74, factors: ['Low social', 'No reviews reply'] },
-        { name: 'Finance Solutions', tier: 3, vertical: 'Financial Services', arr: 55000, riskScore: 72, factors: ['Support tickets up', 'Low NPS'] },
-        { name: 'Property Management Co', tier: 5, vertical: 'Property - Full Service', arr: 19800, riskScore: 71, factors: ['Low engagement', 'Declining usage'] },
-        { name: 'Local Agency Partners', tier: 4, vertical: 'Agency - Brand', arr: 35000, riskScore: 70, factors: ['No recent activity', 'Low adoption'] }
-    ],
-
     initialized: false,
+    currentFilters: {
+        industry: 'all',
+        vertical: 'all',
+        tier: 'all',
+        accountType: 'all',
+        riskLevel: 'all',
+        search: ''
+    },
 
     /**
      * Initialize the application
      */
     init() {
         if (this.initialized) return;
+
+        // Initialize filter dropdowns
+        this.initFilters();
 
         // Initialize charts
         Charts.init();
@@ -34,13 +32,43 @@ const App = {
         // Animate KPIs
         this.animateKPIs();
 
-        // Populate risk table
+        // Populate risk table with all data
         this.populateRiskTable();
+
+        // Update risk summary counts
+        this.updateRiskSummary();
 
         // Set up activity tracking for session extension
         this.trackActivity();
 
         this.initialized = true;
+    },
+
+    /**
+     * Initialize filter dropdowns with data
+     */
+    initFilters() {
+        // Populate Industry filter
+        const industrySelect = document.getElementById('filterIndustry');
+        if (industrySelect && Data.filterOptions.industries) {
+            Data.filterOptions.industries.forEach(industry => {
+                const option = document.createElement('option');
+                option.value = industry;
+                option.textContent = industry;
+                industrySelect.appendChild(option);
+            });
+        }
+
+        // Populate Vertical filter
+        const verticalSelect = document.getElementById('filterVertical');
+        if (verticalSelect && Data.filterOptions.verticals) {
+            Data.filterOptions.verticals.forEach(vertical => {
+                const option = document.createElement('option');
+                option.value = vertical;
+                option.textContent = vertical;
+                verticalSelect.appendChild(option);
+            });
+        }
     },
 
     /**
@@ -59,10 +87,27 @@ const App = {
             sidebarToggle.addEventListener('click', () => this.toggleSidebar());
         }
 
+        // Global filters
+        const filterIndustry = document.getElementById('filterIndustry');
+        const filterVertical = document.getElementById('filterVertical');
+        const filterTier = document.getElementById('filterTier');
+        const filterType = document.getElementById('filterType');
+        const clearFilters = document.getElementById('clearFilters');
+
+        if (filterIndustry) filterIndustry.addEventListener('change', (e) => this.handleFilterChange('industry', e.target.value));
+        if (filterVertical) filterVertical.addEventListener('change', (e) => this.handleFilterChange('vertical', e.target.value));
+        if (filterTier) filterTier.addEventListener('change', (e) => this.handleFilterChange('tier', e.target.value));
+        if (filterType) filterType.addEventListener('change', (e) => this.handleFilterChange('accountType', e.target.value));
+        if (clearFilters) clearFilters.addEventListener('click', () => this.clearAllFilters());
+
+        // Risk level filter
+        const filterRiskLevel = document.getElementById('filterRiskLevel');
+        if (filterRiskLevel) filterRiskLevel.addEventListener('change', (e) => this.handleFilterChange('riskLevel', e.target.value));
+
         // Search accounts
         const searchInput = document.getElementById('searchAccounts');
         if (searchInput) {
-            searchInput.addEventListener('input', (e) => this.filterAccounts(e.target.value));
+            searchInput.addEventListener('input', (e) => this.handleFilterChange('search', e.target.value));
         }
 
         // Export button
@@ -70,6 +115,62 @@ const App = {
         if (exportBtn) {
             exportBtn.addEventListener('click', () => this.exportToCSV());
         }
+
+        // Risk cards clickable
+        const riskCards = document.querySelectorAll('.risk-card');
+        riskCards.forEach(card => {
+            card.addEventListener('click', () => {
+                const riskLevel = card.classList.contains('critical') ? 'Critical' :
+                                  card.classList.contains('high') ? 'High' :
+                                  card.classList.contains('medium') ? 'Medium' : 'Low';
+                const riskSelect = document.getElementById('filterRiskLevel');
+                if (riskSelect) {
+                    riskSelect.value = riskLevel;
+                    this.handleFilterChange('riskLevel', riskLevel);
+                }
+            });
+            card.style.cursor = 'pointer';
+        });
+    },
+
+    /**
+     * Handle filter change
+     */
+    handleFilterChange(filterName, value) {
+        this.currentFilters[filterName] = value;
+        this.applyFilters();
+    },
+
+    /**
+     * Apply all current filters
+     */
+    applyFilters() {
+        this.populateRiskTable();
+        this.updateRiskSummary();
+    },
+
+    /**
+     * Clear all filters
+     */
+    clearAllFilters() {
+        this.currentFilters = {
+            industry: 'all',
+            vertical: 'all',
+            tier: 'all',
+            accountType: 'all',
+            riskLevel: 'all',
+            search: ''
+        };
+
+        // Reset select elements
+        document.getElementById('filterIndustry').value = 'all';
+        document.getElementById('filterVertical').value = 'all';
+        document.getElementById('filterTier').value = 'all';
+        document.getElementById('filterType').value = 'all';
+        document.getElementById('filterRiskLevel').value = 'all';
+        document.getElementById('searchAccounts').value = '';
+
+        this.applyFilters();
     },
 
     /**
@@ -169,35 +270,76 @@ const App = {
     },
 
     /**
+     * Update risk summary cards
+     */
+    updateRiskSummary() {
+        const filteredAccounts = Data.getFilteredAccounts(this.currentFilters);
+        const stats = Data.getSummaryStats(filteredAccounts);
+
+        // Update risk counts
+        const criticalCount = document.querySelector('.risk-card.critical .risk-count');
+        const highCount = document.querySelector('.risk-card.high .risk-count');
+        const mediumCount = document.querySelector('.risk-card.medium .risk-count');
+        const lowCount = document.querySelector('.risk-card.low .risk-count');
+
+        if (criticalCount) criticalCount.textContent = stats.criticalRisk;
+        if (highCount) highCount.textContent = stats.highRisk;
+        if (mediumCount) mediumCount.textContent = stats.mediumRisk;
+        if (lowCount) lowCount.textContent = stats.lowRisk;
+    },
+
+    /**
      * Populate risk accounts table
      */
     populateRiskTable() {
         const tbody = document.getElementById('riskTableBody');
         if (!tbody) return;
 
-        tbody.innerHTML = this.riskAccounts.map(account => `
-            <tr>
-                <td><strong>${account.name}</strong></td>
-                <td>Tier ${account.tier}</td>
-                <td>${account.vertical}</td>
-                <td>$${account.arr.toLocaleString()}</td>
-                <td>
-                    <span class="risk-badge ${this.getRiskClass(account.riskScore)}">
-                        ${account.riskScore}
-                    </span>
-                </td>
-                <td>
-                    <div class="risk-factors">
-                        ${account.factors.map(f => `<span class="factor-tag">${f}</span>`).join('')}
-                    </div>
-                </td>
-                <td>
-                    <button class="btn-view" onclick="App.viewAccount('${account.name}')">
-                        View
-                    </button>
-                </td>
-            </tr>
-        `).join('');
+        // Get filtered accounts
+        const filteredAccounts = Data.getFilteredAccounts(this.currentFilters);
+
+        // Sort by risk score descending
+        const sortedAccounts = [...filteredAccounts].sort((a, b) => b.riskScore - a.riskScore);
+
+        if (sortedAccounts.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 2rem; color: var(--gray-500);">
+                        No accounts match the current filters
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = sortedAccounts.map(account => {
+            const riskClass = this.getRiskClass(account.riskScore);
+            const factors = Data.getRiskFactors(account);
+
+            return `
+                <tr>
+                    <td><strong>${account.name}</strong></td>
+                    <td>Tier ${account.tier || '-'}</td>
+                    <td>${account.vertical || '-'}</td>
+                    <td>$${(account.arr || 0).toLocaleString()}</td>
+                    <td>
+                        <span class="risk-badge ${riskClass}">
+                            ${account.riskScore}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="risk-factors">
+                            ${factors.map(f => `<span class="factor-tag">${f}</span>`).join('')}
+                        </div>
+                    </td>
+                    <td>
+                        <button class="btn-view" onclick="App.viewAccount('${account.name}')">
+                            View
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
     },
 
     /**
@@ -211,37 +353,32 @@ const App = {
     },
 
     /**
-     * Filter accounts in table
-     */
-    filterAccounts(searchTerm) {
-        const term = searchTerm.toLowerCase();
-        const rows = document.querySelectorAll('#riskTableBody tr');
-
-        rows.forEach(row => {
-            const text = row.textContent.toLowerCase();
-            row.style.display = text.includes(term) ? '' : 'none';
-        });
-    },
-
-    /**
      * View account details (placeholder)
      */
     viewAccount(accountName) {
-        alert(`Account Details: ${accountName}\n\nThis would open a detailed view modal in the full implementation.`);
+        const account = Data.accounts.find(a => a.name === accountName);
+        if (account) {
+            alert(`Account Details: ${accountName}\n\nTier: ${account.tier}\nIndustry: ${account.industry || 'N/A'}\nVertical: ${account.vertical || 'N/A'}\nARR: $${(account.arr || 0).toLocaleString()}\nRisk Score: ${account.riskScore}\nType: ${account.accountType}`);
+        }
     },
 
     /**
      * Export data to CSV
      */
     exportToCSV() {
-        const headers = ['Account Name', 'Tier', 'Vertical', 'ARR', 'Risk Score', 'Risk Factors'];
-        const rows = this.riskAccounts.map(a => [
+        const filteredAccounts = Data.getFilteredAccounts(this.currentFilters);
+        const sortedAccounts = [...filteredAccounts].sort((a, b) => b.riskScore - a.riskScore);
+
+        const headers = ['Account Name', 'Tier', 'Vertical', 'Industry', 'ARR', 'Risk Score', 'Account Type', 'Risk Factors'];
+        const rows = sortedAccounts.map(a => [
             a.name,
-            `Tier ${a.tier}`,
-            a.vertical,
-            a.arr,
+            `Tier ${a.tier || '-'}`,
+            a.vertical || '-',
+            a.industry || '-',
+            a.arr || 0,
             a.riskScore,
-            a.factors.join('; ')
+            a.accountType,
+            Data.getRiskFactors(a).join('; ')
         ]);
 
         let csv = headers.join(',') + '\n';
@@ -254,7 +391,7 @@ const App = {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `soci-risk-accounts-${new Date().toISOString().split('T')[0]}.csv`;
+        a.download = `soci-accounts-${new Date().toISOString().split('T')[0]}.csv`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
