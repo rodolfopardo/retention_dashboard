@@ -698,5 +698,123 @@ const Charts = {
             if (chart) chart.destroy();
         });
         this.instances = {};
+    },
+
+    /**
+     * Update all charts based on filtered data
+     */
+    updateAllCharts(filters) {
+        const filteredAccounts = Data.getFilteredAccounts(filters);
+        const stats = Data.getSummaryStats(filteredAccounts);
+
+        // Update Client Distribution Chart
+        this.updateClientDistribution(filteredAccounts, stats);
+
+        // Update Churn by Tier Chart
+        this.updateChurnByTier(filteredAccounts);
+
+        // Update Churn by Vertical Chart
+        this.updateChurnByVertical(filteredAccounts);
+
+        // Update Industry Churn Chart
+        this.updateIndustryChurn(filteredAccounts);
+    },
+
+    /**
+     * Update Client Distribution Chart
+     */
+    updateClientDistribution(filteredAccounts, stats) {
+        if (!this.instances.clientDistribution) return;
+
+        this.instances.clientDistribution.data.datasets[0].data = [stats.activeClients, stats.formerClients];
+
+        // Update center text plugin
+        this.instances.clientDistribution.options.plugins = {
+            ...this.instances.clientDistribution.options.plugins
+        };
+
+        // Update center text
+        const totalAccounts = stats.activeClients + stats.formerClients;
+        this.instances.clientDistribution.config.plugins = [{
+            id: 'centerText',
+            beforeDraw: (chart) => {
+                const { width, height, ctx } = chart;
+                ctx.restore();
+                ctx.font = "bold 24px Inter";
+                ctx.fillStyle = '#1f2937';
+                ctx.textBaseline = 'middle';
+                ctx.textAlign = 'center';
+                ctx.fillText(totalAccounts.toLocaleString(), width / 2, height / 2 - 10);
+                ctx.font = "13px Inter";
+                ctx.fillStyle = '#6b7280';
+                ctx.fillText('Total Accounts', width / 2, height / 2 + 15);
+                ctx.save();
+            }
+        }];
+
+        this.instances.clientDistribution.update();
+    },
+
+    /**
+     * Update Churn by Tier Chart
+     */
+    updateChurnByTier(filteredAccounts) {
+        if (!this.instances.churnByTier) return;
+
+        // Calculate churn rate per tier
+        const tiers = [5, 4, 3, 2, 1];
+        const churnRates = tiers.map(tier => {
+            const tierAccounts = filteredAccounts.filter(a => a.tier === tier);
+            if (tierAccounts.length === 0) return 0;
+            const churned = tierAccounts.filter(a => a.accountType.includes('Former')).length;
+            return parseFloat(((churned / tierAccounts.length) * 100).toFixed(1));
+        });
+
+        this.instances.churnByTier.data.datasets[0].data = churnRates;
+        this.instances.churnByTier.update();
+    },
+
+    /**
+     * Update Churn by Vertical Chart
+     */
+    updateChurnByVertical(filteredAccounts) {
+        if (!this.instances.churnByVertical) return;
+
+        const verticals = ['Property', 'Property - Full Service', 'Agency - Local', 'Property - SaaS', 'Brands - Corporate Owned', 'Brands - Franchise'];
+        const shortLabels = ['Property', 'Prop. Full Svc', 'Agency Local', 'Prop. SaaS', 'Brands Corp', 'Brands Fran.'];
+
+        const churnRates = verticals.map(vertical => {
+            const verticalAccounts = filteredAccounts.filter(a => a.vertical === vertical);
+            if (verticalAccounts.length === 0) return 0;
+            const churned = verticalAccounts.filter(a => a.accountType.includes('Former')).length;
+            return parseFloat(((churned / verticalAccounts.length) * 100).toFixed(1));
+        });
+
+        this.instances.churnByVertical.data.labels = shortLabels;
+        this.instances.churnByVertical.data.datasets[0].data = churnRates;
+        this.instances.churnByVertical.update();
+    },
+
+    /**
+     * Update Industry Churn Chart
+     */
+    updateIndustryChurn(filteredAccounts) {
+        if (!this.instances.industryChurn) return;
+
+        const industries = ['Property', 'Healthcare & Other Related Services', 'Retail', 'Manufacturing & Wholesale Trade', 'Financial Services', 'Food & Beverage Services'];
+        const shortLabels = ['Property', 'Healthcare', 'Retail', 'Mfg & Trade', 'Financial', 'Food & Bev'];
+
+        const clientCounts = industries.map(industry => {
+            return filteredAccounts.filter(a => a.industry === industry && !a.accountType.includes('Former')).length;
+        });
+
+        const formerCounts = industries.map(industry => {
+            return filteredAccounts.filter(a => a.industry === industry && a.accountType.includes('Former')).length;
+        });
+
+        this.instances.industryChurn.data.labels = shortLabels;
+        this.instances.industryChurn.data.datasets[0].data = clientCounts;
+        this.instances.industryChurn.data.datasets[1].data = formerCounts;
+        this.instances.industryChurn.update();
     }
 };

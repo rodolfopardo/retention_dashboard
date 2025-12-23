@@ -147,6 +147,46 @@ const App = {
     applyFilters() {
         this.populateRiskTable();
         this.updateRiskSummary();
+        this.updateKPIs();
+        Charts.updateAllCharts(this.currentFilters);
+    },
+
+    /**
+     * Update KPI cards based on filtered data
+     */
+    updateKPIs() {
+        const filteredAccounts = Data.getFilteredAccounts(this.currentFilters);
+        const stats = Data.getSummaryStats(filteredAccounts);
+
+        // Update Active Clients
+        const activeClientsEl = document.querySelector('.kpi-card:nth-child(1) .kpi-value');
+        if (activeClientsEl) {
+            activeClientsEl.textContent = this.formatNumber(stats.activeClients);
+        }
+
+        // Update Former Clients
+        const formerClientsEl = document.querySelector('.kpi-card:nth-child(2) .kpi-value');
+        if (formerClientsEl) {
+            formerClientsEl.textContent = this.formatNumber(stats.formerClients);
+        }
+
+        // Update churn rate in trend
+        const churnRateTrend = document.querySelector('.kpi-card:nth-child(2) .kpi-trend span');
+        if (churnRateTrend) {
+            churnRateTrend.textContent = stats.churnRate + '% churn rate';
+        }
+
+        // Update Total ARR
+        const totalArrEl = document.querySelector('.kpi-card:nth-child(3) .kpi-value');
+        if (totalArrEl) {
+            totalArrEl.textContent = '$' + this.formatNumber(stats.totalArr);
+        }
+
+        // Update Lost ARR
+        const lostArrEl = document.querySelector('.kpi-card:nth-child(4) .kpi-value');
+        if (lostArrEl) {
+            lostArrEl.textContent = '$' + this.formatNumber(stats.lostArr);
+        }
     },
 
     /**
